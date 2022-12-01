@@ -26,6 +26,6 @@ func (s *Server) ListenAndServe() {
 }
 
 func (s *Server) InitRoutes(socialAccountService *social_account.SocialAccountService) {
-	s.router.Get("/auth/get-auth-url", NewSocialAccountHandler(socialAccountService, s.logger))
+	s.router.Get("/auth/get-auth-url", GetAuthUrlHandler(socialAccountService, s.logger))
 	s.router.Get("/create-post", CreatePostHandler(socialAccountService, s.logger))
 }

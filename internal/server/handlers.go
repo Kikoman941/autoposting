@@ -6,16 +6,14 @@ import (
 	"net/http"
 )
 
-func NewSocialAccountHandler(socialAccountService *social_account.SocialAccountService, logger *logging.Logger) http.HandlerFunc {
+func GetAuthUrlHandler(socialAccountService *social_account.SocialAccountService, logger *logging.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		network := r.URL.Query().Get("network")
-		credentials := r.URL.Query().Get("credentials")
-		if err := socialAccountService.CreateAccount(network, credentials); err != nil {
-			logger.Errorln(err)
-			_, _ = w.Write([]byte("Cannot create new account"))
-			return
+		authURL, err := socialAccountService.GetAuthURL(network)
+		if err != nil {
+			_, _ = w.Write([]byte(err.Error()))
 		}
-		_, _ = w.Write([]byte("Done"))
+		_, _ = w.Write([]byte(authURL))
 		return
 	}
 }

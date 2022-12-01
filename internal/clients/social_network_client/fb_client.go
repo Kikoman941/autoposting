@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 type fbCreatePostResponse struct {
@@ -20,9 +21,26 @@ type fbClient struct {
 	workApiUrl string
 }
 
-func (f *fbClient) UploadImage() {
-	//TODO implement me
-	panic("implement me")
+func (f *fbClient) GetAuthURL(credentials string) (string, error) {
+	vkCredentials, err := f.stringToFBCredentials(credentials)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/authorize", f.authApiUrl), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create auth url request")
+	}
+
+	q := url.Values{
+		"client_id":     []string{vkCredentials.AppID},
+		"redirect_uri":  []string{v.redirectUrl},
+		"response_type": []string{"code"},
+		"scope":         []string{"offline,groups,photos,video,pages,wall"},
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req.URL.String(), nil
 }
 
 func (f *fbClient) CreatePost(credentials string, groupID string, post string) (string, error) {
@@ -72,6 +90,20 @@ func (f *fbClient) CreatePost(credentials string, groupID string, post string) (
 func (f *fbClient) DeletePost() {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (f *fbClient) UploadImage() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f *fbClient) stringToFBCredentials(credentials string) (*FBCredentials, error) {
+	fbCredentials := &FBCredentials{}
+	err := json.Unmarshal([]byte(credentials), fbCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal fb credentials {%s}: %s", credentials, err)
+	}
+	return fbCredentials, nil
 }
 
 func NewFBClient() SocialNetworkClient {

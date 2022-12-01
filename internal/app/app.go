@@ -35,6 +35,7 @@ func (a *App) Run() {
 	}
 	socialAccountRepository := socialAccountStorage.NewRepository(postgresqlClient)
 	socialAccountService := social_account.NewService(
+		a.logger,
 		socialAccountRepository,
 		socialNetworkAccounts,
 	)
