@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 type OKCredentials struct {
@@ -14,13 +15,32 @@ type OKCredentials struct {
 }
 
 type okClient struct {
-	httpClient *http.Client
-	workApiUrl string
+	httpClient  *http.Client
+	authApiUrl  string
+	workApiUrl  string
+	redirectUrl string
 }
 
-func (o *okClient) UploadImage() {
-	//TODO implement me
-	panic("implement me")
+func (o *okClient) GetAuthURL(credentials string) (string, error) {
+	okCredentials, err := o.stringToOKCredentials(credentials)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/oauth/authorize", o.authApiUrl), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create auth url request")
+	}
+
+	q := url.Values{
+		"client_id":     []string{okCredentials.AppID},
+		"redirect_uri":  []string{o.redirectUrl},
+		"response_type": []string{"token"},
+		"scope":         []string{"VALUABLE_ACCESS;LONG_ACCESS_TOKEN;PHOTO_CONTENT;GROUP_CONTENT;VIDEO_CONTENT"},
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req.URL.String(), nil
 }
 
 func (o *okClient) CreatePost(credentials string, groupID string, post string) (string, error) {
@@ -69,10 +89,26 @@ func (o *okClient) DeletePost() {
 	panic("implement me")
 }
 
+func (o *okClient) UploadImage() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (o *okClient) stringToOKCredentials(credentials string) (*OKCredentials, error) {
+	okCredentials := &OKCredentials{}
+	err := json.Unmarshal([]byte(credentials), okCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal ok credentials {%s}: %s", credentials, err)
+	}
+	return okCredentials, nil
+}
+
 func NewOKClient() SocialNetworkClient {
 	client := okClient{
-		httpClient: &http.Client{},
-		workApiUrl: "https://api.ok.ru",
+		httpClient:  &http.Client{},
+		authApiUrl:  "https://connect.ok.ru",
+		workApiUrl:  "https://api.ok.ru",
+		redirectUrl: "http://localhost:8080/auth/",
 	}
 	return &client
 }

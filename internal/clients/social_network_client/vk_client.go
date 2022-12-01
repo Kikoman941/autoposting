@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -38,9 +39,26 @@ type vkClient struct {
 	scope       string
 }
 
-func (v *vkClient) UploadImage() {
-	//TODO implement me
-	panic("implement me")
+func (v *vkClient) GetAuthURL(credentials string) (string, error) {
+	vkCredentials, err := v.stringToVKCredentials(credentials)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/authorize", v.authApiUrl), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create auth url request")
+	}
+
+	q := url.Values{
+		"client_id":     []string{vkCredentials.AppID},
+		"redirect_uri":  []string{v.redirectUrl},
+		"response_type": []string{"code"},
+		"scope":         []string{"offline,groups,photos,video,pages,wall"},
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return req.URL.String(), nil
 }
 
 func (v *vkClient) CreatePost(credentials string, groupID, post string) (string, error) {
@@ -95,6 +113,20 @@ func (v *vkClient) DeletePost() {
 	panic("implement me")
 }
 
+func (v *vkClient) UploadImage() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (v *vkClient) stringToVKCredentials(credentials string) (*VKCredentials, error) {
+	vkCredentials := &VKCredentials{}
+	err := json.Unmarshal([]byte(credentials), vkCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal vk credentials {%s}: %s", credentials, err)
+	}
+	return vkCredentials, nil
+}
+
 func (v *vkClient) getAccessToken(credentials *VKCredentials) (string, error) {
 	var data AccessTokenResponse
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/access_token", v.authApiUrl), nil)
@@ -138,7 +170,7 @@ func NewVKClient() SocialNetworkClient {
 		httpClient:  &http.Client{},
 		authApiUrl:  "https://oauth.vk.com",
 		workApiUrl:  "https://api.vk.com",
-		redirectUrl: "https://api.vk.com/blank.html",
+		redirectUrl: "http://localhost:8080/auth/",
 		scope:       "offline,groups,photos,video,pages,wall",
 	}
 	return &client
