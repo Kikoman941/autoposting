@@ -1,9 +1,9 @@
 package main
 
 import (
-	"amplifr/internal/app"
-	"amplifr/internal/config"
-	logging "amplifr/pkg"
+	"autoposting/internal/app"
+	"autoposting/internal/config"
+	logging "autoposting/pkg"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module amplifr
+module autoposting
 
 go 1.18
 

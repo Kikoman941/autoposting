@@ -1,7 +1,7 @@
 package social_account
 
 import (
-	"amplifr/internal/clients/social_network_client"
+	"autoposting/internal/clients/social_network_client"
 	"context"
 	"fmt"
 )

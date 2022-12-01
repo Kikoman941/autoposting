@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"amplifr/internal/clients/db"
-	"amplifr/internal/social_account"
+	"autoposting/internal/clients/db"
+	"autoposting/internal/social_account"
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v10"

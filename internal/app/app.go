@@ -1,13 +1,13 @@
 package app
 
 import (
-	"amplifr/internal/clients/db"
-	"amplifr/internal/clients/social_network_client"
-	"amplifr/internal/config"
-	"amplifr/internal/server"
-	"amplifr/internal/social_account"
-	socialAccountStorage "amplifr/internal/social_account/storage"
-	logging "amplifr/pkg"
+	"autoposting/internal/clients/db"
+	"autoposting/internal/clients/social_network_client"
+	"autoposting/internal/config"
+	"autoposting/internal/server"
+	"autoposting/internal/social_account"
+	socialAccountStorage "autoposting/internal/social_account/storage"
+	logging "autoposting/pkg"
 	"context"
 )
 

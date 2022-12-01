@@ -1,8 +1,8 @@
 package server
 
 import (
-	"amplifr/internal/social_account"
-	logging "amplifr/pkg"
+	"autoposting/internal/social_account"
+	logging "autoposting/pkg"
 	"net/http"
 )
 

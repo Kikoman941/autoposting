@@ -1,7 +1,7 @@
 package social_network_client
 
 import (
-	logging "amplifr/pkg"
+	logging "autoposting/pkg"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
