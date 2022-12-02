@@ -42,6 +42,26 @@ func (sas *SocialAccountService) GetAuthURL(network string) (string, error) {
 	return authURL, nil
 }
 
+func (sas *SocialAccountService) GetAccessToken(queryParams map[string][]string) (string, error) {
+	var socialAccount SocialAccount
+	network := queryParams["network"][0]
+	delete(queryParams, "network")
+
+	socialAccount, err := sas.repository.FindAccountByNetwork(context.TODO(), network)
+	if err != nil {
+		sas.logger.Errorf("cannot get social account by network %s:\n%s", network, err)
+		return "", err
+	}
+
+	accessToken, err := sas.socialNetworkClients[network].GetAccessToken(socialAccount.Credential, queryParams)
+	if err != nil {
+		sas.logger.Errorf("cannot get auth URL for %s:\n%s", network, err)
+		return "", err
+	}
+
+	return accessToken, nil
+}
+
 func (sas *SocialAccountService) CreateAccount(network string, credentials string) error {
 	var socialAccount SocialAccount
 	socialAccount, err := sas.repository.FindAccountByNetwork(context.TODO(), network)

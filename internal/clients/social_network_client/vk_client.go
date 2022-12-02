@@ -15,7 +15,6 @@ type VKCredentials struct {
 	SecureKey   string `json:"secure_key"`
 	ServiceKey  string `json:"service_key"`
 	AccessToken string `json:"access_token"`
-	Code        string `json:"code"`
 }
 
 type AccessTokenResponse struct {
@@ -61,18 +60,64 @@ func (v *vkClient) GetAuthURL(credentials string) (string, error) {
 	return req.URL.String(), nil
 }
 
+func (v *vkClient) GetAccessToken(credentials string, queryParams map[string][]string) (string, error) {
+	var vkCredentials VKCredentials
+	var data AccessTokenResponse
+
+	err := json.Unmarshal([]byte(credentials), &vkCredentials)
+	if err != nil {
+		return "", fmt.Errorf("cannot unmarshal vk credentials {%s}:\n%s", credentials, err)
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/access_token", v.authApiUrl), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create access token request:\n%s", err)
+	}
+	q := url.Values{
+		"client_id":     []string{vkCredentials.AppID},
+		"client_secret": []string{vkCredentials.SecureKey},
+		"redirect_uri":  []string{v.redirectUrl},
+		"code":          []string{queryParams["code"][0]},
+	}
+	req.URL.RawQuery = q.Encode()
+	resp, err := v.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot get access token:\n%s", err)
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("cannot read access token response:\n%s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(
+			"access token response status is %d\ntokenResponse:%s",
+			resp.StatusCode,
+			string(respBody),
+		)
+	}
+
+	err = json.Unmarshal(respBody, &data)
+	if err != nil {
+		return "", fmt.Errorf("cannot unmarshal access token body:\n%s", err)
+	}
+
+	return data.AccessToken, nil
+}
+
 func (v *vkClient) CreatePost(credentials string, groupID, post string) (string, error) {
 	var data vkCreatePostResponse
 	var vkCredentials VKCredentials
 
 	err := json.Unmarshal([]byte(credentials), &vkCredentials)
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal vk credentials {%s}: %s", credentials, err)
+		return "", fmt.Errorf("cannot unmarshal vk credentials {%s}:\n%s", credentials, err)
 	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/method/wall.post", v.workApiUrl), nil)
 	if err != nil {
-		return "", fmt.Errorf("cannot create createPost request: %s", err)
+		return "", fmt.Errorf("cannot create createPost request:\n%s", err)
 	}
 
 	q := req.URL.Query()
@@ -122,47 +167,9 @@ func (v *vkClient) stringToVKCredentials(credentials string) (*VKCredentials, er
 	vkCredentials := &VKCredentials{}
 	err := json.Unmarshal([]byte(credentials), vkCredentials)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal vk credentials {%s}: %s", credentials, err)
+		return nil, fmt.Errorf("cannot unmarshal vk credentials {%s}:\n%s", credentials, err)
 	}
 	return vkCredentials, nil
-}
-
-func (v *vkClient) getAccessToken(credentials *VKCredentials) (string, error) {
-	var data AccessTokenResponse
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/access_token", v.authApiUrl), nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create access token request: %s", err)
-	}
-	q := req.URL.Query()
-	q.Add("client_id", credentials.AppID)
-	q.Add("client_secret", credentials.SecureKey)
-	q.Add("redirect_uri", v.redirectUrl)
-	q.Add("code", credentials.Code)
-	req.URL.RawQuery = q.Encode()
-	resp, err := v.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot get access token:\n%s", err)
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("cannot read access token response:\n%s", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(
-			"access token response status is %d\ntokenResponse:%s",
-			resp.StatusCode,
-			string(respBody),
-		)
-	}
-
-	err = json.Unmarshal(respBody, &data)
-	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal access token body:\n%s", err)
-	}
-
-	return data.AccessToken, nil
 }
 
 func NewVKClient() SocialNetworkClient {
@@ -170,7 +177,7 @@ func NewVKClient() SocialNetworkClient {
 		httpClient:  &http.Client{},
 		authApiUrl:  "https://oauth.vk.com",
 		workApiUrl:  "https://api.vk.com",
-		redirectUrl: "http://localhost:8080/auth/",
+		redirectUrl: "http://localhost:8080/auth?network=VK",
 		scope:       "offline,groups,photos,video,pages,wall",
 	}
 	return &client

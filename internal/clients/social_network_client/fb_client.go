@@ -13,34 +13,84 @@ type fbCreatePostResponse struct {
 }
 
 type FBCredentials struct {
+	AppID       string `json:"app_id"`
 	AccessToken string `json:"access_token"`
 }
 
 type fbClient struct {
-	httpClient *http.Client
-	workApiUrl string
+	httpClient  *http.Client
+	authApiUrl  string
+	workApiUrl  string
+	redirectUrl string
 }
 
 func (f *fbClient) GetAuthURL(credentials string) (string, error) {
-	vkCredentials, err := f.stringToFBCredentials(credentials)
+	fbCredentials, err := f.stringToFBCredentials(credentials)
 	if err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/authorize", f.authApiUrl), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v15.0/dialog/oauth", f.authApiUrl), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create auth url request")
 	}
 
 	q := url.Values{
-		"client_id":     []string{vkCredentials.AppID},
-		"redirect_uri":  []string{v.redirectUrl},
-		"response_type": []string{"code"},
-		"scope":         []string{"offline,groups,photos,video,pages,wall"},
+		"client_id":     []string{fbCredentials.AppID},
+		"redirect_uri":  []string{f.redirectUrl},
+		"response_type": []string{"token"},
+		"scope":         []string{"pages_show_list,pages_read_engagement,pages_manage_posts"},
+		"display":       []string{"popup"},
 	}
 	req.URL.RawQuery = q.Encode()
 
 	return req.URL.String(), nil
+}
+
+func (f *fbClient) GetAccessToken(credentials string, queryParams map[string][]string) (string, error) {
+	var fbCredentials VKCredentials
+	var data AccessTokenResponse
+
+	err := json.Unmarshal([]byte(credentials), &fbCredentials)
+	if err != nil {
+		return "", fmt.Errorf("cannot unmarshal fb credentials {%s}:\n%s", credentials, err)
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", f.authApiUrl, fbCredentials.AppID), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create access token request:\n%s", err)
+	}
+	q := url.Values{
+		"client_id":     []string{fbCredentials.AppID},
+		"client_secret": []string{fbCredentials.SecureKey},
+		"redirect_uri":  []string{v.redirectUrl},
+		"code":          []string{queryParams["code"][0]},
+	}
+	req.URL.RawQuery = q.Encode()
+	resp, err := v.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot get access token:\n%s", err)
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("cannot read access token response:\n%s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(
+			"access token response status is %d\ntokenResponse:%s",
+			resp.StatusCode,
+			string(respBody),
+		)
+	}
+
+	err = json.Unmarshal(respBody, &data)
+	if err != nil {
+		return "", fmt.Errorf("cannot unmarshal access token body:\n%s", err)
+	}
+
+	return data.AccessToken, nil
 }
 
 func (f *fbClient) CreatePost(credentials string, groupID string, post string) (string, error) {
@@ -49,12 +99,12 @@ func (f *fbClient) CreatePost(credentials string, groupID string, post string) (
 
 	err := json.Unmarshal([]byte(credentials), &fbCredentials)
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal fb credentials {%s}: %s", credentials, err)
+		return "", fmt.Errorf("cannot unmarshal fb credentials {%s}:\n%s", credentials, err)
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/feed", f.workApiUrl, groupID), nil)
 	if err != nil {
-		return "", fmt.Errorf("cannot create createPost request: %s", err)
+		return "", fmt.Errorf("cannot create createPost request:\n%s", err)
 	}
 
 	q := req.URL.Query()
@@ -101,14 +151,16 @@ func (f *fbClient) stringToFBCredentials(credentials string) (*FBCredentials, er
 	fbCredentials := &FBCredentials{}
 	err := json.Unmarshal([]byte(credentials), fbCredentials)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal fb credentials {%s}: %s", credentials, err)
+		return nil, fmt.Errorf("cannot unmarshal fb credentials {%s}:\n%s", credentials, err)
 	}
 	return fbCredentials, nil
 }
 
 func NewFBClient() SocialNetworkClient {
 	return &fbClient{
-		httpClient: &http.Client{},
-		workApiUrl: "https://graph.facebook.com",
+		httpClient:  &http.Client{},
+		authApiUrl:  "https://www.facebook.com",
+		workApiUrl:  "https://graph.facebook.com",
+		redirectUrl: "http://localhost:8080/auth/",
 	}
 }

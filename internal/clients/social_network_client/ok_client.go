@@ -43,17 +43,22 @@ func (o *okClient) GetAuthURL(credentials string) (string, error) {
 	return req.URL.String(), nil
 }
 
+func (o *okClient) GetAccessToken(s string, m map[string][]string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (o *okClient) CreatePost(credentials string, groupID string, post string) (string, error) {
 	var okCredentials OKCredentials
 
 	err := json.Unmarshal([]byte(credentials), &okCredentials)
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal ok credentials {%s}: %s", credentials, err)
+		return "", fmt.Errorf("cannot unmarshal ok credentials {%s}:\n%s", credentials, err)
 	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/mediatopic/post", o.workApiUrl), nil)
 	if err != nil {
-		return "", fmt.Errorf("cannot create createPost request: %s", err)
+		return "", fmt.Errorf("cannot create createPost request:\n%s", err)
 	}
 
 	q := req.URL.Query()
@@ -98,7 +103,7 @@ func (o *okClient) stringToOKCredentials(credentials string) (*OKCredentials, er
 	okCredentials := &OKCredentials{}
 	err := json.Unmarshal([]byte(credentials), okCredentials)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal ok credentials {%s}: %s", credentials, err)
+		return nil, fmt.Errorf("cannot unmarshal ok credentials {%s}:\n%s", credentials, err)
 	}
 	return okCredentials, nil
 }

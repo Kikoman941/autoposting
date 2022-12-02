@@ -2,14 +2,16 @@ module autoposting
 
 go 1.18
 
-require github.com/joho/godotenv v1.4.0
+require (
+	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-pg/pg/v10 v10.10.7
+	github.com/joho/godotenv v1.4.0
+	github.com/sirupsen/logrus v1.9.0
+)
 
 require (
-	github.com/go-chi/chi/v5 v5.0.7 // indirect
-	github.com/go-pg/pg/v10 v10.10.7 // indirect
 	github.com/go-pg/zerochecker v0.2.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
