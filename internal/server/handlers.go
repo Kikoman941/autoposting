@@ -29,7 +29,6 @@ func GetAccessTokenHandler(socialAccountService *social_account.SocialAccountSer
 		queryParams := r.URL.Query()
 		accessToken, err := socialAccountService.GetAccessToken(queryParams)
 		if err != nil {
-			logger.Errorln(err)
 			_, _ = w.Write([]byte("Cannot get access token"))
 			return
 		}

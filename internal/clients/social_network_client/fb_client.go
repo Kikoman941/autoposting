@@ -56,18 +56,16 @@ func (f *fbClient) GetAccessToken(credentials string, queryParams map[string][]s
 		return "", fmt.Errorf("cannot unmarshal fb credentials {%s}:\n%s", credentials, err)
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", f.authApiUrl, fbCredentials.AppID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", f.authApiUrl, queryParams["groupID"]), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create access token request:\n%s", err)
 	}
 	q := url.Values{
-		"client_id":     []string{fbCredentials.AppID},
-		"client_secret": []string{fbCredentials.SecureKey},
-		"redirect_uri":  []string{v.redirectUrl},
-		"code":          []string{queryParams["code"][0]},
+		"fields":       []string{"access_token"},
+		"access_token": []string{queryParams["#access_token"][0]},
 	}
 	req.URL.RawQuery = q.Encode()
-	resp, err := v.httpClient.Do(req)
+	resp, err := f.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot get access token:\n%s", err)
 	}
@@ -161,6 +159,6 @@ func NewFBClient() SocialNetworkClient {
 		httpClient:  &http.Client{},
 		authApiUrl:  "https://www.facebook.com",
 		workApiUrl:  "https://graph.facebook.com",
-		redirectUrl: "http://localhost:8080/auth/",
+		redirectUrl: "http://localhost:8080/auth?network=FB",
 	}
 }

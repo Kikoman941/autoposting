@@ -45,7 +45,17 @@ func (sas *SocialAccountService) GetAuthURL(network string) (string, error) {
 func (sas *SocialAccountService) GetAccessToken(queryParams map[string][]string) (string, error) {
 	var socialAccount SocialAccount
 	network := queryParams["network"][0]
+	project := queryParams["project"][0]
 	delete(queryParams, "network")
+
+	if network == "FB" {
+		group, err := sas.repository.GetGroup(context.TODO(), socialAccount.ID, project)
+		if err != nil {
+			sas.logger.Errorf("cannot get group for %s %s:\n%s", project, network, err)
+			return "", err
+		}
+		queryParams["groupID"] = []string{group.GroupInfo.ID}
+	}
 
 	socialAccount, err := sas.repository.FindAccountByNetwork(context.TODO(), network)
 	if err != nil {
