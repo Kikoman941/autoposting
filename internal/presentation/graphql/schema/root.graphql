@@ -1,0 +1,20 @@
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Query {
+    """ Получить url авторизации соц сети """
+    getAccountAuthUrl(input: GetAccountAuthUrlInput!): GetAccountAuthUrlOutput!
+    """ Получить страницу соц сети """
+    getPagesFromSocialNetwork(input: GetPagesFromSocialNetworkInput!): GetPagesFromSocialNetworkOutput!
+}
+
+type Mutation {
+    """ Создать аккаунт соц сети """
+    createSocialNetworkAccount(input: CreateSocialNetworkAccountInput!): CreateSocialNetworkAccountOutput!
+    """ Создать страницу соц сети """
+    createSocialNetworkPage(input: CreateSocialNetworkPageInput!): CreateSocialNetworkPageOutput!
+    """ Создать пост """
+    createPost(input: CreatePostInput!): CreatePostOutput!
+}

@@ -1,0 +1,29 @@
+""" Базовый интерфейс ошибок """
+interface ServiceErrorInterface {
+    message: String!
+}
+
+""" Внутренняя ошибка """
+type InternalError implements ServiceErrorInterface {
+    message: String!
+}
+
+""" Ошибка валидации """
+type ValidationError implements ServiceErrorInterface {
+    message: String!
+}
+
+""" Ошибка доступа """
+type AccessDeniedError implements ServiceErrorInterface {
+    message: String!
+}
+
+""" Страница соц сети уже существует """
+type SocialNetworkAccountAlreadyExistsError implements ServiceErrorInterface {
+    message: String!
+}
+
+""" Страница соц сети уже существует """
+type PageAlreadyExistsError implements ServiceErrorInterface {
+    message: String!
+}

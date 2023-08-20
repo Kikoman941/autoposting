@@ -1,0 +1,27 @@
+""" Аккаунт в социальной сети """
+type SocialNetworkAccount {
+    id: Int!
+    socialNetwork: String!
+    credentials: String!
+}
+
+""" Страница в соц сети """
+type SocialNetworkPage {
+    project: String!
+    pageInfo: SocialNetworkPageInfo!
+    accessToken: AccessToken
+}
+
+""" Информация о странице в соц сети """
+type SocialNetworkPageInfo {
+    socialNetworkId: String!
+    pageName: String!
+    description: String
+    previewImage: String
+}
+
+""" Токен и время его истечения """
+type AccessToken {
+    token: String!
+    expiresIn: String
+}

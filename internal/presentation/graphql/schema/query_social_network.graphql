@@ -1,0 +1,29 @@
+input GetAccountAuthUrlInput {
+    """ Соц сеть """
+    socialNetwork: String!
+}
+
+union GetAccountAuthUrlOutput =
+    GetAccountAuthUrlResult |
+    ValidationError |
+    InternalError
+
+
+type GetAccountAuthUrlResult {
+    """ Url авторизации """
+    url: String!
+}
+
+input GetPagesFromSocialNetworkInput {
+    """ Соц сеть """
+    socialNetwork: String!
+}
+
+union GetPagesFromSocialNetworkOutput =
+    GetPagesFromSocialNetworkResult |
+    ValidationError |
+    InternalError
+
+type GetPagesFromSocialNetworkResult {
+    pages: [SocialNetworkPage!]
+}

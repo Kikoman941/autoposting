@@ -1,0 +1,74 @@
+input CreateSocialNetworkAccountInput {
+    """ Название соц сети """
+    socialNetwork: String!
+    """ Информация с доступами, ключами и тп """
+    credentials: String!
+}
+
+union CreateSocialNetworkAccountOutput =
+    CreateSocialNetworkAccountResult |
+    SocialNetworkAccountAlreadyExistsError |
+    ValidationError |
+    InternalError
+
+type CreateSocialNetworkAccountResult {
+    ok: Boolean!
+}
+
+input CreateSocialNetworkPageInput {
+    """ Аккаунт страницы """
+    socialNetworkAccountId: Int!
+    """ Проект """
+    project: String!
+    """ Информация о странице """
+    pageInfo: PageInfoInput!
+    """ Токен """
+    accessToken: AccessTokenInput
+}
+
+input PageInfoInput {
+    """ Идентификатор страницы в соц сети """
+    socialNetworkId: String!
+    """ Название """
+    pageName: String!
+    """ Описание """
+    description: String
+    """ Обложка """
+    previewImage: String
+}
+
+input AccessTokenInput {
+    """ Токен """
+    token: String!
+    """ Действителен до """
+    expiresIn: String
+}
+
+union CreateSocialNetworkPageOutput =
+    CreateSocialNetworkPageResult |
+    PageAlreadyExistsError |
+    ValidationError |
+    InternalError
+
+type CreateSocialNetworkPageResult {
+    ok: Boolean!
+}
+
+input CreatePostInput {
+    page: Int!
+    postData: PostData!
+}
+
+input PostData {
+    text: String!
+    image: String
+}
+
+union CreatePostOutput =
+    CreatePostResult |
+    ValidationError |
+    InternalError
+
+type CreatePostResult {
+    ok: Boolean!
+}
