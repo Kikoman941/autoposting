@@ -1,8 +1,9 @@
-package postgres
+package adapters
 
 import (
-	"autoposting/internal/domain"
 	"autoposting/internal/domain/model"
+	"autoposting/internal/domain/service"
+	"autoposting/internal/infrastructure/sqlc-pg/dao"
 	ewrap "autoposting/pkg/err-wrapper"
 	"context"
 	"database/sql"
@@ -12,44 +13,52 @@ import (
 )
 
 type SocialNetworkAccountsRepository struct {
-	db *bun.DB
+	db dao.Querier
 }
 
 type FindSocialNetworkAccountQuery struct {
 	SocialNetworkAnyOf []model.SocialNetworkName
 }
 
-func NewSocialNetworkAccountsRepository(db *bun.DB) *SocialNetworkAccountsRepository {
-	return &SocialNetworkAccountsRepository{
-		db: db,
-	}
+func NewSocialNetworkAccountsRepository(db dao.Querier) *SocialNetworkAccountsRepository {
+	return &SocialNetworkAccountsRepository{db: db}
 }
 
 func (s SocialNetworkAccountsRepository) CreateAccount(
 	ctx context.Context,
 	socialNetworkAccount *model.SocialNetworkAccount,
 ) error {
-	isExist, err := s.db.NewSelect().
-		Model(socialNetworkAccount).
-		Where(`"social_network" = ?`, socialNetworkAccount.SocialNetwork).
-		Exists(ctx)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return ewrap.Errorf("failed to check account exists: %w", err)
-	}
-	if isExist {
-		return domain.NewSocialNetworkAccountAlreadyExistsError(
-			"social network account already exists",
-		)
+	createSocialNetworkAccountParams := dao.CreateSocialNetworkAccountParams{
+		SocialNetwork: string(socialNetworkAccount.SocialNetwork),
+		Credentials:   socialNetworkAccount.Credentials,
+		AccessToken:   *socialNetworkAccount.AccessToken,
 	}
 
-	_, err = s.db.NewInsert().
-		Model(socialNetworkAccount).
-		Returning("id").
-		Exec(ctx)
-	if err != nil || socialNetworkAccount.ID == 0 {
-		return ewrap.Errorf("failed to create account: %w", err)
+	rows, err := s.db.GetSocialNetworkAccounts(ctx, createSocialNetworkAccountParams)
+	if err != nil {
+		return nil, wrap.Errorf("failed to find providers: %w", err)
 	}
-	return nil
+	//isExist, err := s.db.NewSelect().
+	//	Model(socialNetworkAccount).
+	//	Where(`"social_network" = ?`, socialNetworkAccount.SocialNetwork).
+	//	Exists(ctx)
+	//if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	//	return ewrap.Errorf("failed to check account exists: %w", err)
+	//}
+	//if isExist {
+	//	return service.NewSocialNetworkAccountAlreadyExistsError(
+	//		"social network account already exists",
+	//	)
+	//}
+	//
+	//_, err = s.db.NewInsert().
+	//	Model(socialNetworkAccount).
+	//	Returning("id").
+	//	Exec(ctx)
+	//if err != nil || socialNetworkAccount.ID == 0 {
+	//	return ewrap.Errorf("failed to create account: %w", err)
+	//}
+	//return nil
 }
 
 func (s SocialNetworkAccountsRepository) FindAccounts(ctx context.Context, query FindSocialNetworkAccountQuery) ([]model.SocialNetworkAccount, error) {
@@ -95,7 +104,7 @@ func (s SocialNetworkAccountsRepository) FindBySocialNetwork(
 
 	if err != nil {
 		if len(accounts) == 0 {
-			return nil, domain.NewNotFoundError(
+			return nil, service.NewNotFoundError(
 				fmt.Sprintf("social network %v accounts not found", socialNetwork),
 			)
 		}
