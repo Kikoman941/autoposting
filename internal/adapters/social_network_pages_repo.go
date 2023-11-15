@@ -1,25 +1,23 @@
-package postgres
+package adapters
 
 import (
-	"autoposting/internal/domain"
 	"autoposting/internal/domain/model"
+	"autoposting/internal/domain/service"
+	"autoposting/internal/infrastructure/sqlc-pg/dao"
 	ewrap "autoposting/pkg/err-wrapper"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/uptrace/bun"
 	"github.com/ztrue/tracerr"
 )
 
 type SocialNetworkPagesRepository struct {
-	db *bun.DB
+	db dao.Querier
 }
 
-func NewSocialNetworkPagesRepository(db *bun.DB) *SocialNetworkPagesRepository {
-	return &SocialNetworkPagesRepository{
-		db: db,
-	}
+func NewSocialNetworkPagesRepository(db dao.Querier) *SocialNetworkPagesRepository {
+	return &SocialNetworkPagesRepository{db: db}
 }
 
 func (s SocialNetworkPagesRepository) CreatePage(
@@ -44,7 +42,7 @@ func (s SocialNetworkPagesRepository) CreatePage(
 		return tracerr.Errorf("failed to create social network page: %w", err)
 	}
 	if isExist {
-		return domain.NewPageAlreadyExistsError(
+		return service.NewPageAlreadyExistsError(
 			fmt.Sprintf("social network page already exist, page with id=%d updated", socialNetworkPage.ID),
 		)
 	}

@@ -1,0 +1,37 @@
+version: 2
+sql:
+  # make sqlc-gen
+  - schema: "../../../migrations/"
+    queries: "./query/"
+    engine: "postgresql"
+    database:
+      uri: ${POSTGRES_DSN}
+    gen:
+      go:
+        package: "dao"
+        sql_package: "pgx/v5"
+        out: "./dao/"
+        emit_interface: true
+        emit_result_struct_pointers: true
+        emit_pointers_for_null_types: true
+        omit_unused_structs: false
+        overrides:
+          - db_type: "int4"
+            go_type:
+              type: "int"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              type: "time.Time"
+              pointer: true
+          - column: "autoposting.social_network_accounts.access_token"
+            go_type: "autoposting/internal/domain/model.AccessToken"
+          - column: "autoposting.social_network_accounts.credentials"
+            go_type:
+              type: "string"
+          - column: "autoposting.social_network_pages.page_info"
+            go_type: "autoposting/internal/domain/model.AccessToken"
+          - column: "autoposting.social_network_pages.access_token"
+            go_type: "autoposting/internal/domain/model.SocialNetworkPageInfo"
+          - column: "autoposting.posts.post_data"
+            go_type: "autoposting/internal/domain/model.PostData"

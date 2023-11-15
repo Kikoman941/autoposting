@@ -1,7 +1,6 @@
 package service
 
 import (
-	"autoposting/internal/domain"
 	"autoposting/internal/domain/model"
 	"autoposting/internal/domain/repository"
 	"autoposting/internal/infrastructure/social_network_client"
@@ -94,7 +93,7 @@ func (sns *SocialNetworkService) GetAuthURL(
 ) (string, error) {
 	authUrl, err := sns.socialNetworkClients[socialNetworkName].GetAuthURL(credentials)
 	if err != nil {
-		return "", domain.NewInternalError(err.Error())
+		return "", NewInternalError(err.Error())
 	}
 
 	return authUrl, nil
@@ -167,7 +166,7 @@ func (sns *SocialNetworkService) CreatePost(network, project, post string) error
 func getSocialNetworkName(socialNetwork string) (model.SocialNetworkName, error) {
 	socialNetworkName := model.SocialNetworkName(socialNetwork)
 	if err := socialNetworkName.Validate(); err != nil {
-		return "", domain.NewValidationError(
+		return "", NewValidationError(
 			err.Error(),
 			"socialNetworkName",
 			"empty",

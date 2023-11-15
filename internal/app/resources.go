@@ -1,17 +1,17 @@
 package app
 
 import (
+	"autoposting/internal/adapters"
 	"autoposting/internal/app/registry"
 	"autoposting/internal/app/usecase"
 	"autoposting/internal/domain/model"
 	"autoposting/internal/domain/service"
-	"autoposting/internal/infrastructure/postgres"
 	"autoposting/internal/infrastructure/social_network_client"
+	"autoposting/internal/infrastructure/sqlc-pg/dao"
 	ewrap "autoposting/pkg/err-wrapper"
 	"autoposting/pkg/logger"
-	pg_bun "autoposting/pkg/pg-bun"
+	"autoposting/pkg/pgx"
 	"context"
-	"github.com/uptrace/bun"
 )
 
 func NewContainer(ctx context.Context, config *Config) (*registry.Container, error) {
@@ -27,20 +27,14 @@ func NewContainer(ctx context.Context, config *Config) (*registry.Container, err
 		return nil, ewrap.Errorf("failed to init logger: %w", err)
 	}
 
-	postgresClient, err := pg_bun.NewDB(
-		ctx,
-		pg_bun.DBConfig{
-			Dsn:                config.PostgresDSN,
-			MaxOpenConnections: 100,
-			MaxIdleConnections: 100,
-			Hooks: []bun.QueryHook{
-				pg_bun.NewLoggerHook(logger),
-			},
-		},
-	)
+	db, err := pgx.NewPool(&pgx.Config{
+		DSN: config.PostgresDSN,
+	}, logger)
 	if err != nil {
-		return nil, ewrap.Errorf("cannot get postgres client: %w", err)
+		return nil, ewrap.Errorf("cannot get postgres connections pool: %w", err)
 	}
+
+	sqlcQueries := dao.New(db.Conn)
 
 	socialNetworkClients := map[model.SocialNetworkName]social_network_client.SocialNetworkClient{
 		"VK": social_network_client.NewVKClient(),
@@ -50,8 +44,8 @@ func NewContainer(ctx context.Context, config *Config) (*registry.Container, err
 
 	socialNetworkAccountService := service.NewService(
 		logger,
-		postgres.NewSocialNetworkAccountsRepository(postgresClient),
-		postgres.NewSocialNetworkPagesRepository(postgresClient),
+		adapters.NewSocialNetworkAccountsRepository(sqlcQueries),
+		adapters.NewSocialNetworkPagesRepository(sqlcQueries),
 		socialNetworkClients,
 	)
 

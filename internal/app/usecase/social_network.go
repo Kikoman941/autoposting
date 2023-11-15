@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"autoposting/internal/domain"
 	"autoposting/internal/domain/service"
 	"autoposting/internal/presentation/graphql/gen"
 	ewrap "autoposting/pkg/err-wrapper"
@@ -30,15 +29,15 @@ func (u *SocialNetworkUsecase) CreateSocialNetworkAccount(
 		input.Credentials,
 	); err != nil {
 		switch {
-		case domain.IsSocialNetworkAccountAlreadyExistsError(err):
+		case service.IsSocialNetworkAccountAlreadyExistsError(err):
 			return gen.SocialNetworkAccountAlreadyExistsError{
 				Message: err.Error(),
 			}, nil
-		case domain.IsValidationError(err):
+		case service.IsValidationError(err):
 			return gen.ValidationError{
 				Message: err.Error(),
 			}, nil
-		case domain.IsInternalError(err):
+		case service.IsInternalError(err):
 			return gen.InternalError{
 				Message: err.Error(),
 			}, nil
@@ -62,7 +61,7 @@ func (u *SocialNetworkUsecase) CreateSocialNetworkPage(
 ) (gen.CreateSocialNetworkPageOutput, error) {
 	if err := u.socialNetworkService.CreateSocialNetworkPage(ctx, input); err != nil {
 		switch {
-		case domain.IsPageAlreadyExistsError(err):
+		case service.IsPageAlreadyExistsError(err):
 			return gen.PageAlreadyExistsError{
 				Message: err.Error(),
 			}, nil
@@ -87,7 +86,7 @@ func (u *SocialNetworkUsecase) GetAccessToken(
 	socialNetworkAccount, err := u.socialNetworkService.GetSocialNetworkAccount(ctx, socialNetwork)
 	if err != nil {
 		switch {
-		case domain.IsValidationError(err) || domain.IsNotFoundError(err):
+		case service.IsValidationError(err) || service.IsNotFoundError(err):
 			return err
 		default:
 			return ewrap.Errorf("failed to find social socialNetwork %s account: %w", socialNetwork, err)
@@ -113,11 +112,11 @@ func (u *SocialNetworkUsecase) GetAuthURL(
 	socialNetworkAccount, err := u.socialNetworkService.GetSocialNetworkAccount(ctx, input.SocialNetwork)
 	if err != nil {
 		switch {
-		case domain.IsValidationError(err):
+		case service.IsValidationError(err):
 			return gen.ValidationError{
 				Message: err.Error(),
 			}, nil
-		case domain.IsNotFoundError(err):
+		case service.IsNotFoundError(err):
 			return gen.InternalError{
 				Message: err.Error(),
 			}, nil
@@ -133,7 +132,7 @@ func (u *SocialNetworkUsecase) GetAuthURL(
 		socialNetworkAccount.Credentials,
 	)
 	if err != nil {
-		if domain.IsInternalError(err) {
+		if service.IsInternalError(err) {
 			return gen.InternalError{
 				Message: err.Error(),
 			}, nil
@@ -153,11 +152,11 @@ func (u *SocialNetworkUsecase) GetPagesFromSocialNetwork(
 	socialNetworkAccount, err := u.socialNetworkService.GetSocialNetworkAccount(ctx, input.SocialNetwork)
 	if err != nil {
 		switch {
-		case domain.IsValidationError(err):
+		case service.IsValidationError(err):
 			return gen.ValidationError{
 				Message: err.Error(),
 			}, nil
-		case domain.IsNotFoundError(err):
+		case service.IsNotFoundError(err):
 			return gen.InternalError{
 				Message: err.Error(),
 			}, nil
